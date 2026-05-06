@@ -1,464 +1,515 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-  PieChart, Pie, Cell, LineChart, Line 
-} from 'recharts';
-import { 
-  LayoutDashboard, 
-  Leaf, 
-  Camera, 
-  BarChart3, 
-  Zap, 
-  Info, 
-  ChevronRight, 
-  Upload, 
-  RefreshCw,
-  Search,
-  Factory,
-  Globe
-} from 'lucide-react';
-
-// --- DATA MOCK (Berdasarkan Research 2024-2025) ---
-const UMKM_DATA = [
-  { region: 'Jawa Barat', umkm: 5.4, waste: 1.2 },
-  { region: 'Jawa Timur', umkm: 4.5, waste: 1.1 },
-  { region: 'Jawa Tengah', umkm: 4.4, waste: 0.9 },
-  { region: 'Sumatera Utara', umkm: 1.1, waste: 0.4 },
-  { region: 'Banten', umkm: 0.9, waste: 0.3 },
-];
-
-const SECTOR_WASTE_DATA = [
-  { name: 'Tekstil/Fashion', value: 35, color: '#10b981' },
-  { name: 'Makanan & Minuman', value: 45, color: '#34d399' },
-  { name: 'Kerajinan Kayu', value: 12, color: '#059669' },
-  { name: 'Plastik/Polimer', value: 8, color: '#064e3b' },
-];
-
-const App = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanResult, setScanResult] = useState(null);
-  const [uploadedImage, setUploadedImage] = useState(null);
-
-  // Fungsi Simulasi Upload & Analisis AI
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (f) => {
-        setUploadedImage(f.target.result);
-        startAnalysis();
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const startAnalysis = () => {
-    setIsScanning(true);
-    setScanResult(null);
-    
-    // Simulasi Deep Learning Processing (3 detik)
-    setTimeout(() => {
-      setIsScanning(false);
-      setScanResult({
-        productName: "Produk Manufaktur Tekstil",
-        wasteIndex: "Tinggi (7.5/10)",
-        wasteDetails: "Ditemukan penggunaan serat sintetis non-degradable sebesar 65%. Sisa potongan bahan (perca) mencapai 20% dari total input.",
-        recommmendation: "Gunakan pola 'Zero-Waste Cutting'. Ganti bahan baku ke serat rami atau katun organik untuk meningkatkan indeks keberlanjutan.",
-        redesignUrl: "https://images.unsplash.com/photo-1523381235312-3a1647fa9911?auto=format&fit=crop&w=800&q=80"
-      });
-    }, 3000);
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* Sidebar Navigation */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 hidden md:flex flex-col z-50">
-        <div className="p-6 flex items-center gap-2">
-          <div className="bg-emerald-600 p-2 rounded-lg">
-            <Leaf className="text-white w-6 h-6" />
-          </div>
-          <h1 className="text-xl font-bold tracking-tight text-emerald-900">LENTERA.ID</h1>
-        </div>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LENTERA.ID - Solusi Industri 5.0 UMKM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
         
-        <nav className="flex-1 px-4 py-4 space-y-2">
-          <NavItem 
-            icon={<LayoutDashboard size={20} />} 
-            label="Dashboard Data" 
-            active={activeTab === 'dashboard'} 
-            onClick={() => setActiveTab('dashboard')} 
-          />
-          <NavItem 
-            icon={<Camera size={20} />} 
-            label="Deteksi Limbah AI" 
-            active={activeTab === 'detection'} 
-            onClick={() => setActiveTab('detection')} 
-          />
-          <NavItem 
-            icon={<Globe size={20} />} 
-            label="Informasi Industri" 
-            active={activeTab === 'info'} 
-            onClick={() => setActiveTab('info')} 
-          />
-        </nav>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
 
-        <div className="p-6 border-t border-slate-100">
-          <div className="bg-emerald-50 rounded-xl p-4">
-            <p className="text-xs font-semibold text-emerald-800 uppercase mb-1">Visi Indonesia 2045</p>
-            <p className="text-sm text-emerald-600">Mendukung UMKM Hijau & Berkelanjutan.</p>
-          </div>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .nav-item.active {
+            background-color: #059669;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2);
+        }
+
+        .scanning-line {
+            height: 2px;
+            background: #10b981;
+            box-shadow: 0 0 15px #10b981;
+            position: absolute;
+            width: 100%;
+            top: 0;
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Mobile Header -->
+    <header class="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <div class="bg-emerald-600 p-1.5 rounded-lg text-white">
+                <i class="fas fa-leaf"></i>
+            </div>
+            <span class="font-bold text-lg text-emerald-900">LENTERA.ID</span>
         </div>
-      </aside>
+        <button id="mobileMenuBtn" class="p-2 text-slate-500">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+    </header>
 
-      {/* Main Content */}
-      <main className="md:ml-64 p-4 md:p-8">
-        {/* Header Section */}
-        <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800">
-              {activeTab === 'dashboard' && "Wawasan Data UMKM & Limbah"}
-              {activeTab === 'detection' && "AI Waste Detector & Redesign"}
-              {activeTab === 'info' && "Revolusi Industri 5.0"}
-            </h2>
-            <p className="text-slate-500">Transformasi Digital menuju Ekosistem Manufaktur Ramah Lingkungan.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="bg-white border border-slate-200 p-2 rounded-full shadow-sm">
-              <Search size={18} className="text-slate-400" />
-            </button>
-            <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border border-emerald-200">
-              MI
-            </div>
-          </div>
-        </header>
-
-        {/* Tab 1: Dashboard Data */}
-        {activeTab === 'dashboard' && (
-          <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard title="Total UMKM Terdata" value="30.12 JT" sub="Update Jan 2025" icon={<Factory className="text-blue-500" />} color="bg-blue-50" />
-              <StatCard title="Kontribusi PDB" value="61.07 %" sub="Target 2025: 63%" icon={<Zap className="text-amber-500" />} color="bg-amber-50" />
-              <StatCard title="Volume Limbah Industri" value="4.8 JT Ton" sub="Per Tahun (Est)" icon={<Leaf className="text-emerald-500" />} color="bg-emerald-50" />
+    <div class="flex min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-200 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-40 md:sticky md:h-screen">
+            <div class="p-8 hidden md:flex items-center gap-3">
+                <div class="bg-emerald-600 p-2 rounded-xl text-white">
+                    <i class="fas fa-leaf text-xl"></i>
+                </div>
+                <h1 class="text-xl font-extrabold tracking-tight text-emerald-900">LENTERA.ID</h1>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Chart 1: Regional Distribution */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 className="font-bold mb-6 flex items-center gap-2">
-                  <BarChart3 size={20} className="text-emerald-600" />
-                  Sebaran UMKM & Estimasi Limbah (Jutaan)
-                </h3>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={UMKM_DATA}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="region" />
-                      <YAxis />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      />
-                      <Legend />
-                      <Bar name="Jumlah UMKM (Jt)" dataKey="umkm" fill="#10b981" radius={[4, 4, 0, 0]} />
-                      <Bar name="Besaran Limbah (Jt Ton)" dataKey="waste" fill="#334155" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Chart 2: Sector Composition */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 className="font-bold mb-6 flex items-center gap-2">
-                  <PieChart size={20} className="text-emerald-600" />
-                  Komposisi Jenis Limbah UMKM Manufaktur
-                </h3>
-                <div className="h-80 flex flex-col md:flex-row items-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={SECTOR_WASTE_DATA}
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {SECTOR_WASTE_DATA.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="w-full md:w-48 space-y-2 mt-4 md:mt-0">
-                    {SECTOR_WASTE_DATA.map((item) => (
-                      <div key={item.name} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full" style={{backgroundColor: item.color}}></div>
-                          <span>{item.name}</span>
-                        </div>
-                        <span className="font-semibold">{item.value}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 2: AI Detection */}
-        {activeTab === 'detection' && (
-          <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom duration-500">
-            <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
-              <div className="p-8 border-b border-slate-100 flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-800">Review Produk & Deteksi Limbah</h3>
-                  <p className="text-slate-500 text-sm">Unggah foto produk manufaktur Anda untuk analisis keberlanjutan real-time.</p>
-                </div>
-                <div className="hidden sm:block">
-                  <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Powered by Lentera AI</span>
-                </div>
-              </div>
-
-              <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Upload Side */}
-                <div className="space-y-4">
-                  <div 
-                    className={`relative border-2 border-dashed rounded-2xl h-80 flex flex-col items-center justify-center transition-all ${uploadedImage ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-400 bg-slate-50'}`}
-                  >
-                    {uploadedImage ? (
-                      <div className="absolute inset-0 p-2">
-                        <img src={uploadedImage} alt="Uploaded" className="w-full h-full object-cover rounded-xl" />
-                        <button 
-                          onClick={() => setUploadedImage(null)}
-                          className="absolute top-4 right-4 bg-white/80 backdrop-blur p-2 rounded-full shadow-lg hover:bg-white text-red-500"
-                        >
-                          <RefreshCw size={20} />
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="cursor-pointer flex flex-col items-center group">
-                        <div className="p-4 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform mb-4">
-                          <Upload className="text-emerald-600" size={32} />
-                        </div>
-                        <span className="text-sm font-medium text-slate-600">Klik untuk unggah gambar produk</span>
-                        <span className="text-xs text-slate-400 mt-1">Format: JPG, PNG (Maks 5MB)</span>
-                        <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
-                      </label>
-                    )}
-                  </div>
-                  
-                  <button 
-                    disabled={!uploadedImage || isScanning}
-                    onClick={startAnalysis}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200"
-                  >
-                    {isScanning ? (
-                      <RefreshCw className="animate-spin" />
-                    ) : (
-                      <Zap size={20} />
-                    )}
-                    {isScanning ? 'Menganalisis Material...' : 'Analisis Dampak Limbah'}
-                  </button>
-                </div>
-
-                {/* Analysis Result Side */}
-                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col justify-center">
-                  {!isScanning && !scanResult && (
-                    <div className="text-center py-12">
-                      <Info className="mx-auto text-slate-300 mb-4" size={48} />
-                      <p className="text-slate-400">Hasil analisis akan muncul di sini setelah Anda mengunggah gambar.</p>
-                    </div>
-                  )}
-
-                  {isScanning && (
-                    <div className="space-y-6 py-8">
-                      <div className="h-4 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 animate-[loading_2s_ease-in-out_infinite]" style={{width: '60%'}}></div>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="h-4 bg-slate-200 rounded w-3/4 animate-pulse"></div>
-                        <div className="h-4 bg-slate-200 rounded w-full animate-pulse"></div>
-                        <div className="h-4 bg-slate-200 rounded w-1/2 animate-pulse"></div>
-                      </div>
-                      <p className="text-center text-xs text-slate-400 font-medium">Scanning Texture & Material Composition...</p>
-                    </div>
-                  )}
-
-                  {scanResult && (
-                    <div className="space-y-5 animate-in zoom-in-95 duration-500">
-                      <div>
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Kategori Produk</label>
-                        <h4 className="text-lg font-bold text-slate-800">{scanResult.productName}</h4>
-                      </div>
-                      
-                      <div className="bg-white p-4 rounded-xl border border-slate-100">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-semibold text-slate-600">Estimasi Indeks Limbah</span>
-                          <span className="text-sm font-bold text-orange-600">{scanResult.wasteIndex}</span>
-                        </div>
-                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                          <div className="bg-orange-500 h-full" style={{width: '75%'}}></div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Review AI</label>
-                        <p className="text-sm text-slate-600 leading-relaxed mt-1">
-                          {scanResult.wasteDetails}
-                        </p>
-                      </div>
-
-                      <div className="p-4 bg-emerald-900 rounded-2xl text-white">
-                        <label className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Rekomendasi Eco-Design</label>
-                        <p className="text-sm mt-1 mb-4 italic">
-                          "{scanResult.recommmendation}"
-                        </p>
-                        <div className="rounded-lg overflow-hidden border border-emerald-700">
-                           <img src={scanResult.redesignUrl} alt="Redesign Suggestion" className="w-full h-32 object-cover opacity-80" />
-                        </div>
-                        <p className="text-[10px] text-center mt-2 text-emerald-300">Konsep Desain Ulang Berkelanjutan</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 3: Information Section */}
-        {activeTab === 'info' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-700">
-            <div className="space-y-6">
-              <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                <h3 className="text-2xl font-bold text-slate-800 mb-4 tracking-tight">Revolusi Industri 5.0</h3>
-                <p className="text-slate-600 leading-relaxed mb-6">
-                  Berbeda dengan Industri 4.0 yang berfokus pada efisiensi mesin, **Industri 5.0** mengembalikan manusia ke pusat produksi. 
-                  Ini adalah kolaborasi antara kecerdasan mesin (AI) dan kreativitas manusia untuk mencapai *Sustainability* dan *Personalization*.
-                </p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                    <h4 className="font-bold text-blue-700 mb-1">Human-Centric</h4>
-                    <p className="text-xs text-blue-600/80">Fokus pada kesejahteraan pekerja dan masyarakat.</p>
-                  </div>
-                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                    <h4 className="font-bold text-emerald-700 mb-1">Sustainable</h4>
-                    <p className="text-xs text-emerald-600/80">Ekonomi sirkular untuk masa depan bumi.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-slate-900 p-8 rounded-3xl text-white relative overflow-hidden shadow-2xl">
-                <div className="relative z-10">
-                  <h3 className="text-xl font-bold mb-4">Urgenitas Pengolahan Limbah</h3>
-                  <div className="space-y-4">
-                    <FactItem label="Meningkat" text="Timbulan sampah nasional mencapai 70 juta ton/tahun." />
-                    <FactItem label="Boros" text="Industri tekstil menghabiskan 93 miliar m³ air per tahun." />
-                    <FactItem label="Ekonomi" text="Ekonomi sirkular berpotensi menambah Rp19.3 Triliun ke PDB." />
-                  </div>
-                </div>
-                <div className="absolute -bottom-10 -right-10 opacity-20">
-                   <Globe size={200} />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-              <h3 className="text-xl font-bold text-slate-800 mb-6">Tantangan UMKM Hijau 2025</h3>
-              <div className="space-y-6">
-                <ChallengeItem 
-                  num="01" 
-                  title="Akses Pembiayaan" 
-                  desc="Kesenjangan pembiayaan hijau UMKM mencapai Rp 2.400 triliun pada 2026." 
-                />
-                <ChallengeItem 
-                  num="02" 
-                  title="Kesiapan Data" 
-                  desc="Kurangnya standarisasi aliran material dan emisi di tingkat mikro-kecil." 
-                />
-                <ChallengeItem 
-                  num="03" 
-                  title="Kesenjangan Skill" 
-                  desc="Penerapan AI membutuhkan literasi digital yang belum merata di daerah." 
-                />
-                <ChallengeItem 
-                  num="04" 
-                  title="Regulasi" 
-                  desc="Pemberlakuan pajak karbon (CBAM) menuntut UMKM untuk lebih transparan." 
-                />
-              </div>
-              <div className="mt-8 pt-8 border-t border-slate-100">
-                <button className="w-full flex items-center justify-between text-emerald-700 font-bold hover:translate-x-1 transition-transform">
-                  Baca Selengkapnya di Business Plan
-                  <ChevronRight size={20} />
+            <nav class="px-4 py-4 space-y-2">
+                <button onclick="switchTab('dashboard')" class="nav-item active w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all transition-all duration-200" id="btn-dashboard">
+                    <i class="fas fa-chart-pie w-5"></i>
+                    <span>Dashboard Data</span>
                 </button>
-              </div>
+                <button onclick="switchTab('ai-detect')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 transition-all duration-200" id="btn-ai-detect">
+                    <i class="fas fa-microscope w-5"></i>
+                    <span>Deteksi Limbah AI</span>
+                </button>
+                <button onclick="switchTab('info')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 transition-all duration-200" id="btn-info">
+                    <i class="fas fa-industry w-5"></i>
+                    <span>Informasi Industri</span>
+                </button>
+            </nav>
+
+            <div class="absolute bottom-8 left-0 w-full px-6">
+                <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100">
+                    <p class="text-[10px] font-bold text-emerald-800 uppercase mb-1">Visi Indonesia 2045</p>
+                    <p class="text-xs text-emerald-600 leading-relaxed font-medium">Transisi UMKM menuju Ekonomi Sirkular.</p>
+                </div>
             </div>
-          </div>
-        )}
-      </main>
+        </aside>
 
-      {/* Global CSS for Animations */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes loading {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
+        <!-- Main Content Area -->
+        <main class="flex-1 p-4 md:p-10 max-w-7xl mx-auto w-full">
+            
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active animate-in fade-in duration-500">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-bold text-slate-800">Wawasan Data UMKM & Limbah</h2>
+                    <p class="text-slate-500 mt-2 italic font-medium">Visualisasi real-time sebaran manufaktur dan dampak lingkungan di Indonesia (Data 2024-2025).</p>
+                </header>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-all">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-3 bg-blue-50 rounded-2xl text-blue-600">
+                                <i class="fas fa-store text-xl"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded">LIVE DATA</span>
+                        </div>
+                        <p class="text-slate-500 text-sm font-medium">Total UMKM Manufaktur</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-1">30.12 JT</h3>
+                        <p class="text-xs text-slate-400 mt-2"><i class="fas fa-arrow-up text-emerald-500 mr-1"></i> Naik 2.4% dari tahun sebelumnya</p>
+                    </div>
+
+                    <div class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-all">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-3 bg-amber-50 rounded-2xl text-amber-600">
+                                <i class="fas fa-dumpster text-xl"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded">ESTIMASI</span>
+                        </div>
+                        <p class="text-slate-500 text-sm font-medium">Timbulan Limbah/Tahun</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-1">4.8 JT Ton</h3>
+                        <p class="text-xs text-slate-400 mt-2">Sektor Tekstil & Makanan mendominasi</p>
+                    </div>
+
+                    <div class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-all">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-3 bg-emerald-50 rounded-2xl text-emerald-600">
+                                <i class="fas fa-chart-line text-xl"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded">TARGET</span>
+                        </div>
+                        <p class="text-slate-500 text-sm font-medium">Kontribusi PDB 2025</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-1">61.07%</h3>
+                        <p class="text-xs text-slate-400 mt-2">Target Pemerintah: 63% di 2025</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Regional Chart -->
+                    <div class="glass-card p-8 rounded-3xl shadow-sm border border-slate-100">
+                        <h4 class="font-bold text-lg mb-6 flex items-center gap-2 text-slate-800">
+                            <i class="fas fa-map-marker-alt text-emerald-500"></i>
+                            Korelasi UMKM & Limbah per Wilayah
+                        </h4>
+                        <canvas id="regionalChart" height="300"></canvas>
+                    </div>
+
+                    <!-- Sector Chart -->
+                    <div class="glass-card p-8 rounded-3xl shadow-sm border border-slate-100">
+                        <h4 class="font-bold text-lg mb-6 flex items-center gap-2 text-slate-800">
+                            <i class="fas fa-pie-chart text-emerald-500"></i>
+                            Sumber Utama Limbah Manufaktur UMKM
+                        </h4>
+                        <div class="flex flex-col md:flex-row items-center gap-8">
+                            <div class="w-full md:w-1/2">
+                                <canvas id="sectorChart"></canvas>
+                            </div>
+                            <div class="w-full md:w-1/2 space-y-4">
+                                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                                        <span class="text-sm font-semibold">Tekstil/Fashion</span>
+                                    </div>
+                                    <span class="text-sm font-bold text-slate-600">35%</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-3 h-3 rounded-full bg-emerald-300"></div>
+                                        <span class="text-sm font-semibold">Makanan & Minuman</span>
+                                    </div>
+                                    <span class="text-sm font-bold text-slate-600">45%</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-3 h-3 rounded-full bg-emerald-700"></div>
+                                        <span class="text-sm font-semibold">Plastik/Kayu</span>
+                                    </div>
+                                    <span class="text-sm font-bold text-slate-600">20%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Detector Tab -->
+            <section id="ai-detect" class="tab-content animate-in slide-in-from-bottom duration-500 max-w-5xl mx-auto">
+                <header class="mb-10 text-center">
+                    <span class="bg-emerald-100 text-emerald-700 text-[10px] font-black px-4 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">LENTERA INTELLIGENCE SYSTEM</span>
+                    <h2 class="text-4xl font-extrabold text-slate-800">Review Produk & Deteksi Limbah</h2>
+                    <p class="text-slate-500 mt-3 max-w-2xl mx-auto">Gunakan teknologi computer vision untuk menganalisis jejak karbon dan mendapatkan rekomendasi Eco-Design instan.</p>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Upload Box -->
+                    <div class="lg:col-span-5">
+                        <div class="glass-card p-8 rounded-[2.5rem] shadow-xl border-2 border-dashed border-emerald-200">
+                            <div id="uploadPlaceholder" class="relative h-80 rounded-3xl overflow-hidden bg-slate-50 border border-slate-200 flex flex-col items-center justify-center group hover:bg-emerald-50 transition-all cursor-pointer" onclick="document.getElementById('productImage').click()">
+                                <div class="p-5 bg-white rounded-full shadow-lg text-emerald-600 mb-4 group-hover:scale-110 transition-transform">
+                                    <i class="fas fa-cloud-upload-alt text-3xl"></i>
+                                </div>
+                                <p class="font-bold text-slate-700">Unggah Foto Produk</p>
+                                <p class="text-xs text-slate-400 mt-1">Format: JPG, PNG (Max 10MB)</p>
+                                <input type="file" id="productImage" class="hidden" accept="image/*" onchange="handleImagePreview(event)">
+                                <div id="imagePreviewContainer" class="hidden absolute inset-0 z-10 bg-white">
+                                    <img id="previewImg" class="w-full h-full object-cover">
+                                    <div id="scanningEffect" class="hidden absolute inset-0 z-20">
+                                        <div class="scanning-line"></div>
+                                        <div class="absolute inset-0 bg-emerald-500/10 backdrop-blur-[1px]"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="analyzeBtn" disabled onclick="startSimulation()" class="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-200/50">
+                                <i class="fas fa-wand-magic-sparkles"></i>
+                                Analisis Jejak Limbah
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Output -->
+                    <div class="lg:col-span-7">
+                        <div id="resultCard" class="glass-card p-8 rounded-[2.5rem] shadow-sm border border-slate-200 h-full flex flex-col items-center justify-center text-center">
+                            <div id="emptyState">
+                                <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 mx-auto text-slate-300">
+                                    <i class="fas fa-microscope text-4xl"></i>
+                                </div>
+                                <h4 class="text-xl font-bold text-slate-800 mb-2">Belum Ada Data Analisis</h4>
+                                <p class="text-slate-500 px-8 text-sm">Silakan unggah foto produk manufaktur Anda di sebelah kiri untuk memulai peninjauan real-time oleh LENTERA AI.</p>
+                            </div>
+
+                            <div id="loadingState" class="hidden w-full space-y-6">
+                                <div class="flex items-center gap-4 mb-8">
+                                    <div class="animate-spin text-emerald-600 text-2xl"><i class="fas fa-circle-notch"></i></div>
+                                    <p class="text-lg font-bold text-slate-700">Menganalisis Material & Tekstur...</p>
+                                </div>
+                                <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-emerald-500 w-1/3 animate-[loading_1.5s_ease-in-out_infinite]" id="progressBar"></div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="h-20 bg-slate-50 rounded-2xl border border-slate-100 animate-pulse"></div>
+                                    <div class="h-20 bg-slate-50 rounded-2xl border border-slate-100 animate-pulse"></div>
+                                </div>
+                            </div>
+
+                            <div id="analysisResult" class="hidden w-full text-left animate-in zoom-in-95 duration-500">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h4 class="text-2xl font-black text-slate-800">LENTERA-Report #402</h4>
+                                    <button onclick="resetAnalysis()" class="text-slate-400 hover:text-red-500"><i class="fas fa-undo"></i></button>
+                                </div>
+
+                                <div class="p-5 bg-orange-50 border border-orange-100 rounded-3xl mb-6">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-sm font-bold text-orange-800">ESTIMASI WASTE INDEX</span>
+                                        <span class="text-sm font-black text-orange-600">TINGGI (7.8/10)</span>
+                                    </div>
+                                    <div class="w-full bg-orange-200 h-3 rounded-full overflow-hidden">
+                                        <div class="bg-orange-500 h-full" style="width: 78%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-6">
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Analisis Material Detil</label>
+                                        <p class="text-sm text-slate-600 leading-relaxed">Terdeteksi penggunaan polimer sintetis non-organik sebesar 72%. Sisa potongan produksi (scrap) diprediksi mencapai 150gr per unit produk karena pola potong yang tidak efisien.</p>
+                                    </div>
+
+                                    <div class="bg-emerald-900 rounded-[2rem] p-6 text-white shadow-2xl relative overflow-hidden">
+                                        <div class="relative z-10">
+                                            <div class="flex items-center gap-2 mb-3">
+                                                <i class="fas fa-lightbulb text-emerald-400"></i>
+                                                <label class="text-xs font-black text-emerald-400 uppercase tracking-widest">Rekomendasi Redesain</label>
+                                            </div>
+                                            <p class="text-sm italic font-medium leading-relaxed mb-4">
+                                                "Implementasikan konsep 'Zero-Waste Patterning'. Ganti bahan baku utama ke Bio-Fiber berbasis Serat Rami yang 100% biodegradable untuk menurunkan indeks limbah ke 1.2/10."
+                                            </p>
+                                            <div class="rounded-2xl overflow-hidden border border-emerald-700 h-40">
+                                                <img src="https://images.unsplash.com/photo-1523381235312-3a1647fa9911?auto=format&fit=crop&w=800&q=80" alt="Eco Design Preview" class="w-full h-full object-cover opacity-70">
+                                            </div>
+                                        </div>
+                                        <div class="absolute -bottom-10 -right-10 text-emerald-800 opacity-20">
+                                            <i class="fas fa-recycle text-[150px]"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Info Tab -->
+            <section id="info" class="tab-content animate-in fade-in duration-700">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="space-y-8">
+                        <div class="glass-card p-10 rounded-[3rem] border border-slate-100 shadow-sm">
+                            <h3 class="text-3xl font-black text-slate-800 mb-6">Revolusi Industri 5.0</h3>
+                            <p class="text-slate-600 leading-relaxed mb-8 text-lg">
+                                Industri 5.0 bukan sekadar tentang mesin, melainkan harmonisasi antara <strong>Kreativitas Manusia</strong>, <strong>Kecerdasan Buatan (AI)</strong>, dan <strong>Kelestarian Planet</strong>.
+                            </p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="p-5 bg-blue-50 rounded-3xl border border-blue-100">
+                                    <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 mb-4 shadow-sm">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <h4 class="font-bold text-blue-800 mb-1">Human-Centric</h4>
+                                    <p class="text-xs text-blue-600/70">Teknologi melayani kesejahteraan manusia, bukan sebaliknya.</p>
+                                </div>
+                                <div class="p-5 bg-emerald-50 rounded-3xl border border-emerald-100">
+                                    <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-emerald-600 mb-4 shadow-sm">
+                                        <i class="fas fa-leaf"></i>
+                                    </div>
+                                    <h4 class="font-bold text-emerald-800 mb-1">Eco-Resilient</h4>
+                                    <p class="text-xs text-emerald-600/70">Sistem produksi yang tahan banting dan ramah bumi.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 p-10 rounded-[3rem] text-white relative overflow-hidden shadow-2xl">
+                            <h3 class="text-2xl font-bold mb-8 relative z-10">Urgenitas Pengolahan Limbah UMKM</h3>
+                            <div class="space-y-6 relative z-10">
+                                <div class="flex gap-5">
+                                    <div class="text-emerald-500 mt-1"><i class="fas fa-circle-check"></i></div>
+                                    <p class="text-slate-300 text-sm italic">70 Juta ton sampah nasional dihasilkan tiap tahun, sebagian besar dari residu industri UMKM non-olah.</p>
+                                </div>
+                                <div class="flex gap-5">
+                                    <div class="text-emerald-500 mt-1"><i class="fas fa-circle-check"></i></div>
+                                    <p class="text-slate-300 text-sm italic">Industri tekstil manufaktur membuang hingga 2.500 liter air per satu kaos katun konvensional.</p>
+                                </div>
+                                <div class="flex gap-5">
+                                    <div class="text-emerald-500 mt-1"><i class="fas fa-circle-check"></i></div>
+                                    <p class="text-slate-300 text-sm italic">Penerapan Ekonomi Sirkular dapat meningkatkan PDB Indonesia hingga Rp19,3 Triliun di 2026.</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-globe-asia absolute -bottom-10 -right-10 text-[200px] text-white/5"></i>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-10 rounded-[3rem] border border-slate-100">
+                        <h3 class="text-2xl font-bold text-slate-800 mb-8">Tantangan Menuju UMKM Hijau 2025</h3>
+                        <div class="space-y-8">
+                            <div class="flex gap-6">
+                                <span class="text-4xl font-black text-slate-100">01</span>
+                                <div>
+                                    <h4 class="font-extrabold text-slate-800 text-lg">Akses Pembiayaan Hijau</h4>
+                                    <p class="text-sm text-slate-500 mt-1 leading-relaxed">Kesenjangan modal untuk teknologi ramah lingkungan mencapai Rp2.400 Triliun secara nasional.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-6">
+                                <span class="text-4xl font-black text-slate-100">02</span>
+                                <div>
+                                    <h4 class="font-extrabold text-slate-800 text-lg">Literasi Digital & AI</h4>
+                                    <p class="text-sm text-slate-500 mt-1 leading-relaxed">Sebanyak 65% pelaku UMKM daerah belum memahami cara mengintegrasikan AI ke dalam lini produksi.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-6">
+                                <span class="text-4xl font-black text-slate-100">03</span>
+                                <div>
+                                    <h4 class="font-extrabold text-slate-800 text-lg">Standarisasi Global (ESG)</h4>
+                                    <p class="text-sm text-slate-500 mt-1 leading-relaxed">Pemberlakuan Carbon Tax dan CBAM di pasar internasional menuntut transparansi jejak karbon produk.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-12 pt-8 border-t border-slate-100">
+                            <a href="#" class="flex items-center justify-between bg-slate-50 p-6 rounded-3xl group hover:bg-emerald-600 transition-all duration-300">
+                                <span class="font-bold text-slate-700 group-hover:text-white">Pelajari Strategi LENTERA.ID</span>
+                                <i class="fas fa-chevron-right text-emerald-500 group-hover:text-white transform group-hover:translate-x-2 transition-all"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Tab Navigation Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('active', 'bg-emerald-600', 'text-white', 'shadow-lg');
+                nav.classList.add('text-slate-500');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.add('active', 'bg-emerald-600', 'text-white', 'shadow-lg');
+            activeBtn.classList.remove('text-slate-500');
+
+            // On Mobile, close sidebar after selection
+            if(window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
         }
-        .animate-loading {
-          animation: loading 2s infinite linear;
+
+        // Mobile Menu Toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+
+        // Charts Initialization
+        window.onload = function() {
+            // Regional Chart
+            const ctxReg = document.getElementById('regionalChart').getContext('2d');
+            new Chart(ctxReg, {
+                type: 'bar',
+                data: {
+                    labels: ['Jawa Barat', 'Jawa Timur', 'Jawa Tengah', 'Sumut', 'Banten'],
+                    datasets: [{
+                        label: 'Jumlah UMKM (Juta)',
+                        data: [5.4, 4.5, 4.4, 1.1, 0.9],
+                        backgroundColor: '#10b981',
+                        borderRadius: 8
+                    }, {
+                        label: 'Limbah (Juta Ton)',
+                        data: [1.2, 1.1, 0.9, 0.4, 0.3],
+                        backgroundColor: '#334155',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // Sector Chart
+            const ctxSec = document.getElementById('sectorChart').getContext('2d');
+            new Chart(ctxSec, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Tekstil', 'Makanan', 'Lainnya'],
+                    datasets: [{
+                        data: [35, 45, 20],
+                        backgroundColor: ['#10b981', '#6ee7b7', '#065f46'],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '70%',
+                    plugins: { legend: { display: false } }
+                }
+            });
+        };
+
+        // AI Simulation Logic
+        function handleImagePreview(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                    document.getElementById('analyzeBtn').disabled = false;
+                }
+                reader.readAsDataURL(file);
+            }
         }
-      `}} />
-    </div>
-  );
-};
 
-// --- SUB-COMPONENTS ---
+        function startSimulation() {
+            const btn = document.getElementById('analyzeBtn');
+            const emptyState = document.getElementById('emptyState');
+            const loadingState = document.getElementById('loadingState');
+            const analysisResult = document.getElementById('analysisResult');
+            const scanningEffect = document.getElementById('scanningEffect');
 
-const NavItem = ({ icon, label, active, onClick }) => (
-  <button 
-    onClick={onClick}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${active ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
-  >
-    {icon}
-    <span>{label}</span>
-  </button>
-);
+            btn.disabled = true;
+            emptyState.classList.add('hidden');
+            analysisResult.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            scanningEffect.classList.remove('hidden');
 
-const StatCard = ({ title, value, sub, icon, color }) => (
-  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-    <div className="flex items-center justify-between mb-4">
-      <div className={`p-3 rounded-xl ${color}`}>
-        {icon}
-      </div>
-      <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded tracking-widest">LIVE</span>
-    </div>
-    <h4 className="text-slate-500 text-sm font-medium">{title}</h4>
-    <div className="flex items-baseline gap-2 mt-1">
-      <span className="text-2xl font-bold text-slate-800 tracking-tight">{value}</span>
-      <span className="text-xs text-emerald-600 font-semibold">{sub}</span>
-    </div>
-  </div>
-);
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                document.getElementById('progressBar').style.width = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    setTimeout(() => {
+                        loadingState.classList.add('hidden');
+                        scanningEffect.classList.add('hidden');
+                        analysisResult.classList.remove('hidden');
+                        btn.disabled = false;
+                    }, 500);
+                }
+            }, 100);
+        }
 
-const FactItem = ({ label, text }) => (
-  <div className="flex gap-4">
-    <div className="h-6 w-1 bg-emerald-500 rounded-full mt-1 shrink-0"></div>
-    <div>
-      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-tighter block">{label}</span>
-      <p className="text-sm text-slate-300">{text}</p>
-    </div>
-  </div>
-);
-
-const ChallengeItem = ({ num, title, desc }) => (
-  <div className="flex gap-4">
-    <span className="text-lg font-black text-slate-100 select-none leading-none">{num}</span>
-    <div>
-      <h4 className="font-bold text-slate-800 text-sm">{title}</h4>
-      <p className="text-xs text-slate-500 leading-relaxed mt-1">{desc}</p>
-    </div>
-  </div>
-);
-
-export default App;
+        function resetAnalysis() {
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+            document.getElementById('analysisResult').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('productImage').value = '';
+        }
+    </script>
+</body>
+</html>
